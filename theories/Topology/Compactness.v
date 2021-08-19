@@ -435,12 +435,9 @@ destruct (compactness_on_indexed_covers _ _ B H) as [subcover].
       now subst.
 Qed.
 
-Lemma compact_Hausdorff_impl_normal_sep: forall X:TopologicalSpace,
-  compact X -> Hausdorff X -> normal_sep X.
+Instance compact_Hausdorff_is_T3_space {X:TopologicalSpace} (H : compact X) `(H0 : Hausdorff X) : T3_space X.
 Proof.
-intros.
-assert (T3_sep X).
-{ destruct (choice (fun (xy:{xy:point_set X * point_set X |
+destruct (choice (fun (xy:{xy:point_set X * point_set X |
                     let (x,y):=xy in x <> y})
     (UV:Ensemble (point_set X) * Ensemble (point_set X)) =>
     match xy with | exist (x,y) i =>
@@ -448,86 +445,94 @@ assert (T3_sep X).
     open U /\ open V /\ In U x /\ In V y /\ Intersection U V = Empty_set
     end)) as
   [choice_fun].
-- destruct x as [[x y] i].
-  destruct (H0 _ _ i) as [U [V]].
+{ destruct x as [[x y] i].
+  destruct (hausdorff _ _ i) as [U [V]].
   now exists (U, V).
-- pose (choice_fun_U := fun (x y:point_set X)
-    (Hineq:x<>y) => fst (choice_fun (exist _ (x,y) Hineq))).
-  pose (choice_fun_V := fun (x y:point_set X)
-    (Hineq:x<>y) => snd (choice_fun (exist _ (x,y) Hineq))).
-  assert (forall (x y:point_set X) (Hineq:x<>y),
-    open (choice_fun_U x y Hineq) /\
-    open (choice_fun_V x y Hineq) /\
-    In (choice_fun_U x y Hineq) x /\
-    In (choice_fun_V x y Hineq) y /\
-    Intersection (choice_fun_U x y Hineq) (choice_fun_V x y Hineq) = Empty_set).
+}
+pose (choice_fun_U := fun (x y:point_set X)
+  (Hineq:x<>y) => fst (choice_fun (exist _ (x,y) Hineq))).
+pose (choice_fun_V := fun (x y:point_set X)
+  (Hineq:x<>y) => snd (choice_fun (exist _ (x,y) Hineq))).
+assert (forall (x y:point_set X) (Hineq:x<>y),
+  open (choice_fun_U x y Hineq) /\
+  open (choice_fun_V x y Hineq) /\
+  In (choice_fun_U x y Hineq) x /\
+  In (choice_fun_V x y Hineq) y /\
+  Intersection (choice_fun_U x y Hineq) (choice_fun_V x y Hineq) = Empty_set).
 { intros.
   unfold choice_fun_U; unfold choice_fun_V.
   pose proof (H1 (exist _ (x,y) Hineq)).
-  now destruct (choice_fun (exist _ (x,y) Hineq)). }
-  clearbody choice_fun_U choice_fun_V; clear choice_fun H1.
-  split.
-  + now apply Hausdorff_impl_T1_sep.
-  + intros.
-    pose proof (closed_compact _ _ H H1).
-    assert (forall y:point_set X, In F y -> x <> y).
-  { intros. congruence. }
-    pose (cover := fun (y:point_set (SubspaceTopology F)) =>
-      let (y,i):=y in inverse_image (subspace_inc F)
-                         (choice_fun_V x y (H5 y i))).
-    destruct (compactness_on_indexed_covers _ _ cover H4) as [subcover].
-    * destruct a as [y i].
-      apply subspace_inc_continuous, H2.
-    * apply Extensionality_Ensembles; split; red; intros y ?.
-      ** constructor.
-      ** exists y.
-         destruct y as [y i].
-         simpl.
-         constructor.
-         simpl.
-         apply H2.
-    * destruct H6.
-      exists (IndexedIntersection
-        (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
-          let (y,_):=y in let (y,i):=y in choice_fun_U x y (H5 y i))).
-      exists (IndexedUnion
-        (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
-          let (y,_):=y in let (y,i):=y in choice_fun_V x y (H5 y i))).
-      repeat split.
-      ** apply open_finite_indexed_intersection.
-         *** now apply Finite_ens_type.
-         *** destruct a as [[y]].
-             apply H2.
-      ** apply open_indexed_union.
-         destruct a as [[y]].
-         apply H2.
-      ** destruct a as [[y]].
-         apply H2.
-      ** red; intros y ?.
-         assert (In (IndexedUnion
-           (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
-             cover (proj1_sig y))) (exist _ y H8)).
-       { rewrite H7. constructor. }
-         remember (exist (In F) y H8) as ysig.
-         destruct H9 as [[y']].
-         rewrite Heqysig in H9; clear x0 Heqysig.
-         simpl in H9.
-         destruct y' as [y'].
-         simpl in H9.
-         destruct H9.
-         simpl in H9.
-         now exists (exist _ (exist _ y' i0) i).
-      ** apply Extensionality_Ensembles; split; auto with sets; red; intros y ?.
-         destruct H8.
-         destruct H8.
-         destruct H9.
-         pose proof (H8 a).
-         destruct a as [[y]].
-         replace (@Empty_set (point_set X)) with
-           (Intersection (choice_fun_U x y (H5 y i))
-                         (choice_fun_V x y (H5 y i))).
-         *** now constructor.
-         *** apply H2. }
+  now destruct (choice_fun (exist _ (x,y) Hineq)).
+}
+clearbody choice_fun_U choice_fun_V; clear choice_fun H1.
+split.
+{ typeclasses eauto. }
+intros.
+pose proof (closed_compact _ _ H H1).
+assert (forall y:point_set X, In F y -> x <> y).
+{ intros. congruence. }
+pose (cover := fun (y:point_set (SubspaceTopology F)) =>
+  let (y,i):=y in inverse_image (subspace_inc F)
+                     (choice_fun_V x y (H5 y i))).
+destruct (compactness_on_indexed_covers _ _ cover H4) as [subcover].
+- destruct a as [y i].
+  apply subspace_inc_continuous, H2.
+- apply Extensionality_Ensembles; split; red; intros y ?.
+  + constructor.
+  + exists y.
+    destruct y as [y i].
+    simpl.
+    constructor.
+    simpl.
+    apply H2.
+- destruct H6.
+  exists (IndexedIntersection
+    (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
+      let (y,_):=y in let (y,i):=y in choice_fun_U x y (H5 y i))).
+  exists (IndexedUnion
+    (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
+      let (y,_):=y in let (y,i):=y in choice_fun_V x y (H5 y i))).
+  repeat split.
+  + apply open_finite_indexed_intersection.
+    * now apply Finite_ens_type.
+    * destruct a as [[y]].
+      apply H2.
+  + apply open_indexed_union.
+    destruct a as [[y]].
+    apply H2.
+  + destruct a as [[y]].
+    apply H2.
+  + red; intros y ?.
+    assert (In (IndexedUnion
+       (fun y:{y:point_set (SubspaceTopology F) | In subcover y} =>
+          cover (proj1_sig y))) (exist _ y H8)).
+    { rewrite H7. constructor. }
+    remember (exist (In F) y H8) as ysig.
+    destruct H9 as [[y']].
+    rewrite Heqysig in H9; clear x0 Heqysig.
+    simpl in H9.
+    destruct y' as [y'].
+    simpl in H9.
+    destruct H9.
+    simpl in H9.
+    now exists (exist _ (exist _ y' i0) i).
+  + apply Extensionality_Ensembles; split; auto with sets; red; intros y ?.
+    destruct H8.
+    destruct H8.
+    destruct H9.
+    pose proof (H8 a).
+    destruct a as [[y]].
+    replace (@Empty_set (point_set X)) with
+      (Intersection (choice_fun_U x y (H5 y i))
+                    (choice_fun_V x y (H5 y i))).
+    * now constructor.
+    * apply H2.
+Qed.
+
+Instance compact_T3_space_is_normal_space
+         {X:TopologicalSpace} (H : compact X) `(H0 : T3_space X) :
+  normal_space X.
+Proof.
 destruct (choice (fun (xF:{p:point_set X * Ensemble (point_set X) |
                         let (x,F):=p in closed F /\ ~ In F x})
   (UV:Ensemble (point_set X) * Ensemble (point_set X)) =>
@@ -535,96 +540,97 @@ destruct (choice (fun (xF:{p:point_set X * Ensemble (point_set X) |
   let (U,V):=UV in
   open U /\ open V /\ In U x /\ Included F V /\
   Intersection U V = Empty_set)) as [choice_fun].
-- destruct x as [[x F] []].
-  destruct H1.
-  destruct (H4 x F H2 H3) as [U [V]].
+{ destruct x as [[x F] []].
+  destruct (T3_sep x F H1 H2) as [U [V]].
   now exists (U, V).
-- pose (choice_fun_U := fun (x:point_set X) (F:Ensemble (point_set X))
-    (HC:closed F) (Hni:~ In F x) =>
-    fst (choice_fun (exist _ (x,F) (conj HC Hni)))).
-  pose (choice_fun_V := fun (x:point_set X) (F:Ensemble (point_set X))
-    (HC:closed F) (Hni:~ In F x) =>
-    snd (choice_fun (exist _ (x,F) (conj HC Hni)))).
-  assert (forall (x:point_set X) (F:Ensemble (point_set X))
-    (HC:closed F) (Hni:~ In F x),
-    open (choice_fun_U x F HC Hni) /\
-    open (choice_fun_V x F HC Hni) /\
-    In (choice_fun_U x F HC Hni) x /\
-    Included F (choice_fun_V x F HC Hni) /\
-    Intersection (choice_fun_U x F HC Hni) (choice_fun_V x F HC Hni) =
-       Empty_set).
-  + intros.
-    pose proof (H2 (exist _ (x,F) (conj HC Hni))).
-    unfold choice_fun_U, choice_fun_V.
-    now destruct (choice_fun (exist _ (x,F) (conj HC Hni))).
-  + clearbody choice_fun_U choice_fun_V; clear choice_fun H2.
-    split.
-    * apply H1.
-    * intros.
-      pose proof (closed_compact _ _ H H2).
-      assert (forall x:point_set X, In F x -> ~ In G x).
-    { intros.
-      intro.
-      absurd (In Empty_set x).
-      - easy.
-      - now rewrite <- H5. }
-
-      pose (cover := fun x:point_set (SubspaceTopology F) =>
-        let (x,i):=x in inverse_image (subspace_inc F)
-                         (choice_fun_U x G H4 (H7 x i))).
-      destruct (compactness_on_indexed_covers _ _ cover H6) as [subcover].
-      ** destruct a as [x i].
-         apply subspace_inc_continuous, H3.
-      ** apply Extensionality_Ensembles; split; red; intros.
-         *** constructor.
-         *** exists x.
-             destruct x.
-             simpl cover.
-             constructor.
-             simpl.
-             apply H3.
-      ** destruct H8.
-         exists (IndexedUnion
-           (fun x:{x:point_set (SubspaceTopology F) | In subcover x} =>
-              let (x,i):=proj1_sig x in choice_fun_U x G H4 (H7 x i))).
-         exists (IndexedIntersection
-           (fun x:{x:point_set (SubspaceTopology F) | In subcover x} =>
-              let (x,i):=proj1_sig x in choice_fun_V x G H4 (H7 x i))).
-         repeat split.
-         *** apply open_indexed_union.
-             destruct a as [[x]].
-             simpl.
-             apply H3.
-         *** apply open_finite_indexed_intersection.
-             **** apply Finite_ens_type; trivial.
-             **** destruct a as [[x]].
-                  simpl.
-                  apply H3.
-         *** intros x ?.
-             assert (In (@Full_set (point_set (SubspaceTopology F))) (exist _ x H10))
-               by constructor.
-             rewrite <- H9 in H11.
-             remember (exist _ x H10) as xsig.
-             destruct H11.
-             destruct a as [x'].
-             destruct x' as [x'].
-             rewrite Heqxsig in H11; clear x0 Heqxsig.
-             simpl in H11.
-             destruct H11.
-             now exists (exist _ (exist _ x' i0) i).
-         *** destruct a as [x'].
-             simpl.
-             destruct x' as [x'].
-             assert (Included G (choice_fun_V x' G H4 (H7 x' i0))) by apply H3.
-             auto.
-         *** extensionality_ensembles.
-             specialize H11 with a.
-             destruct a as [[x']].
-             simpl in H11, H10.
-             replace (@Empty_set (point_set X)) with (Intersection
-               (choice_fun_U x' G H4 (H7 x' i))
-               (choice_fun_V x' G H4 (H7 x' i))) by apply H3.
-             now constructor.
+}
+pose (choice_fun_U := fun (x:point_set X) (F:Ensemble (point_set X))
+  (HC:closed F) (Hni:~ In F x) =>
+  fst (choice_fun (exist _ (x,F) (conj HC Hni)))).
+pose (choice_fun_V := fun (x:point_set X) (F:Ensemble (point_set X))
+  (HC:closed F) (Hni:~ In F x) =>
+  snd (choice_fun (exist _ (x,F) (conj HC Hni)))).
+assert (forall (x:point_set X) (F:Ensemble (point_set X))
+  (HC:closed F) (Hni:~ In F x),
+  open (choice_fun_U x F HC Hni) /\
+  open (choice_fun_V x F HC Hni) /\
+  In (choice_fun_U x F HC Hni) x /\
+  Included F (choice_fun_V x F HC Hni) /\
+  Intersection (choice_fun_U x F HC Hni) (choice_fun_V x F HC Hni) =
+     Empty_set).
+{ intros.
+  pose proof (H1 (exist _ (x,F) (conj HC Hni))).
+  unfold choice_fun_U, choice_fun_V.
+  now destruct (choice_fun (exist _ (x,F) (conj HC Hni))).
+}
+clearbody choice_fun_U choice_fun_V; clear choice_fun H1.
+split.
+{ apply H0. }
+intros.
+pose proof (closed_compact _ _ H H1).
+assert (forall x:point_set X, In F x -> ~ In G x).
+{ intros.
+  intro.
+  absurd (In Empty_set x).
+  - easy.
+  - now rewrite <- H4.
+}
+pose (cover := fun x:point_set (SubspaceTopology F) =>
+  let (x,i):=x in inverse_image (subspace_inc F)
+                   (choice_fun_U x G H3 (H6 x i))).
+destruct (compactness_on_indexed_covers _ _ cover H5) as [subcover].
+{ destruct a as [x i].
+  apply subspace_inc_continuous, H2.
+}
+{ apply Extensionality_Ensembles; split; red; intros.
+  { constructor. }
+  exists x.
+  destruct x.
+  simpl cover.
+  constructor.
+  simpl.
+  apply H2.
+}
+destruct H7.
+exists (IndexedUnion
+  (fun x:{x:point_set (SubspaceTopology F) | In subcover x} =>
+     let (x,i):=proj1_sig x in choice_fun_U x G H3 (H6 x i))).
+exists (IndexedIntersection
+  (fun x:{x:point_set (SubspaceTopology F) | In subcover x} =>
+     let (x,i):=proj1_sig x in choice_fun_V x G H3 (H6 x i))).
+repeat split.
+- apply open_indexed_union.
+  destruct a as [[x]].
+  simpl. apply H2.
+- apply open_finite_indexed_intersection.
+  + apply Finite_ens_type; trivial.
+  + destruct a as [[x]].
+    simpl. apply H2.
+- intros x ?.
+  assert (In (@Full_set (point_set (SubspaceTopology F))) (exist _ x H9))
+    by constructor.
+  rewrite <- H8 in H10.
+  remember (exist _ x H9) as xsig.
+  destruct H10.
+  destruct a as [x'].
+  destruct x' as [x'].
+  rewrite Heqxsig in H10; clear x0 Heqxsig.
+  simpl in H10.
+  destruct H10.
+  now exists (exist _ (exist _ x' i0) i).
+- destruct a as [x'].
+  simpl.
+  destruct x' as [x'].
+  assert (Included G (choice_fun_V x' G H3 (H6 x' i0))) by apply H2.
+  auto.
+- extensionality_ensembles.
+  specialize H10 with a.
+  destruct a as [[x']].
+  simpl in H10, H9.
+  replace (@Empty_set (point_set X)) with (Intersection
+    (choice_fun_U x' G H3 (H6 x' i))
+    (choice_fun_V x' G H3 (H6 x' i))) by apply H2.
+  now constructor.
 Qed.
 
 Lemma topological_property_compact :

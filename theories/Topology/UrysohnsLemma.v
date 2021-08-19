@@ -709,7 +709,7 @@ Qed.
 
 End Urysohns_Lemma_construction.
 
-Theorem UrysohnsLemma: forall X:TopologicalSpace, normal_sep X ->
+Theorem UrysohnsLemma: forall X:TopologicalSpace, normal_space X ->
   forall F G:Ensemble (point_set X),
   closed F -> closed G -> Intersection F G = Empty_set ->
   exists f:point_set X -> point_set RTop,
@@ -719,7 +719,7 @@ Theorem UrysohnsLemma: forall X:TopologicalSpace, normal_sep X ->
 Proof.
 intros.
 destruct H.
-destruct (H3 F G H0 H1 H2) as [U [V [? [? [? [? ?]]]]]].
+destruct (normal_sep F G H0 H1 H2) as [U [V [? [? [? [? ?]]]]]].
 assert (Included (closure U) (Complement G)).
 { assert (Included (closure U) (Complement V)).
   { apply closure_minimal.
@@ -727,14 +727,14 @@ assert (Included (closure U) (Complement G)).
     - red. intros.
       intro.
       eapply Noone_in_empty.
-      rewrite <- H8.
+      rewrite <- H6.
       econstructor;
         eassumption. }
   assert (Included (Complement V) (Complement G)).
   { red. intros.
     intro.
-    contradiction H10.
-    now apply H7. }
+    contradiction H8.
+    now apply H5. }
   auto with sets. }
 assert (inhabited (forall F U:Ensemble (point_set X), closed F ->
   open U -> Included F U ->
@@ -752,12 +752,12 @@ assert (inhabited (forall F U:Ensemble (point_set X), closed F ->
     simpl in a.
     simpl.
     destruct a as [? []].
-    destruct (H3 F0 (Complement U0)) as [U1 [V1 []]]; trivial.
+    destruct (normal_sep F0 (Complement U0)) as [U1 [V1 []]]; trivial.
     + red. now rewrite Complement_Complement.
     + extensionality_ensembles_inv.
-      contradiction H15.
-      now apply H12.
-    + destruct H14 as [? [? []]].
+      contradiction H13.
+      now apply H10.
+    + destruct H12 as [? [? []]].
       exists U1.
       repeat split; trivial.
       assert (Included (closure U1) (Complement V1)).
@@ -766,29 +766,27 @@ assert (inhabited (forall F U:Ensemble (point_set X), closed F ->
         - red. intros.
           intro.
           eapply Noone_in_empty.
-          rewrite <- H17.
+          rewrite <- H15.
           constructor;
             eassumption. }
       assert (Included (Complement V1) U0).
       { red. intros.
         apply NNPP. intro.
-        contradiction H19.
-        now apply H16. }
+        contradiction H17.
+        now apply H14. }
       auto with sets.
   - exists.
     intros.
     exists (pre_choice_fun (exist _ (F0,U0)
-      (conj H11 (conj H12 H13)))).
-    apply H10. }
-destruct H10 as [normal_sep_fun].
-exists (Urysohns_Lemma_function _ normal_sep_fun
-  U (Complement G) H4 H1 H9).
-split.
-{ apply Urysohns_Lemma_function_continuous. }
-split.
-{ apply Urysohns_Lemma_function_range. }
-split;
-  intros.
-- apply Urysohns_Lemma_function_0; auto.
-- apply Urysohns_Lemma_function_1; auto.
+      (conj H9 (conj H10 H11)))).
+    apply H8. }
+destruct H8 as [normal_sep_fun].
+unshelve eexists (Urysohns_Lemma_function _ normal_sep_fun
+  U (Complement G) _ _ _); try assumption.
+repeat split.
+- apply Urysohns_Lemma_function_continuous.
+- apply Urysohns_Lemma_function_range.
+- apply Urysohns_Lemma_function_range.
+- intros. apply Urysohns_Lemma_function_0; auto.
+- intros. apply Urysohns_Lemma_function_1; auto.
 Qed.
