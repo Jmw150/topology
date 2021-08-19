@@ -99,7 +99,7 @@ Inductive metrizable (X:TopologicalSpace) : Prop :=
     metric d -> metrizes X d ->
     metrizable X.
 
-Lemma MetricTopology_metrizable: forall (X:Type) (d:X->X->R)
+Lemma MetricTopology_metrized: forall (X:Type) (d:X->X->R)
   (d_metric: metric d),
   metrizes (MetricTopology d d_metric) d.
 Proof.
@@ -107,6 +107,14 @@ intros.
 red.
 intros.
 apply Build_TopologicalSpace_from_open_neighborhood_bases_basis.
+Qed.
+
+Corollary MetricTopology_metrizable X (d:X->X->R) d_metric :
+  metrizable (MetricTopology d d_metric).
+Proof.
+apply intro_metrizable with (d := d).
+- assumption.
+- apply MetricTopology_metrized.
 Qed.
 
 Lemma metric_space_open_ball_open :
