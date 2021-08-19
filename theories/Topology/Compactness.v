@@ -435,7 +435,8 @@ destruct (compactness_on_indexed_covers _ _ B H) as [subcover].
       now subst.
 Qed.
 
-Instance compact_Hausdorff_is_T3_space {X:TopologicalSpace} (H : compact X) `(H0 : Hausdorff X) : T3_space X.
+Instance compact_Hausdorff_is_T3_space {X:TopologicalSpace}
+         (H : compact X) `(H0 : Hausdorff X) : T3_space X.
 Proof.
 destruct (choice (fun (xy:{xy:point_set X * point_set X |
                     let (x,y):=xy in x <> y})
